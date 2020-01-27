@@ -1,5 +1,6 @@
 #define RAPIDXML_STATIC_POOL_SIZE (10 * 1024 * 1024)
 #define RAPIDXML_DYNAMIC_POOL_SIZE (2 * 1024 * 1024)
+#define EXML_DEFAULT_BUFFER_SIZE (2 * 1024 * 1024)
 
 #include "rapidxml.hpp"
 #include "rapidxml_print.hpp"
@@ -13,7 +14,10 @@
 #include <vector>
 #include "allocator.hpp"
 
-using ustring = std::basic_string<unsigned char>;
+using ustring = std::basic_string<
+      unsigned char,
+      std::char_traits<unsigned char>,
+      EnifAllocator<unsigned char>>;
 
 class xml_document {
 public:
@@ -425,7 +429,8 @@ bool build_children(ErlNifEnv *env, xml_document &doc, ERL_NIF_TERM children,
 ERL_NIF_TERM node_to_binary(ErlNifEnv *env,
                             rapidxml::xml_node<unsigned char> &node,
                             int flags) {
-  static thread_local std::vector<unsigned char, EnifAllocator<unsigned char>> print_buffer;
+  static thread_local std::vector<unsigned char, EnifAllocator<unsigned char>>
+      print_buffer(EXML_DEFAULT_BUFFER_SIZE, 0);
   print_buffer.clear();
 
   rapidxml::print(std::back_inserter(print_buffer), node, flags);
